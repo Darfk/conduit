@@ -7,8 +7,6 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	// "golang.org/x/tools/go/ast/astutil"
-	// "io"
 	"regexp"
 )
 
