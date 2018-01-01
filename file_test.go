@@ -1,9 +1,8 @@
 package conduit
 
 import (
-	//"bytes"
+	"bytes"
 	"testing"
-	"os"
 )
 
 func TestFile(t *testing.T) {
@@ -25,5 +24,9 @@ func TestFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	createFile(os.Stdout, path, pkg, imports, stages)
+	buf := &bytes.Buffer{}
+
+	createFile(buf, path, pkg, imports, stages)
+
+	t.Log(buf.String())
 }

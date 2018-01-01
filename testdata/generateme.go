@@ -1,10 +1,10 @@
-package conduit
+//go:generate conduit
+package main
 
 import (
 	"fmt"
 	"log"
 	"math/rand"
-	"testing"
 	"time"
 )
 
@@ -34,6 +34,18 @@ func op() *divop {
 	return &divop{n: rand.Intn(15), d: rand.Intn(4)}
 }
 
+// conduit
 func printResult(in *divop) {
 	log.Printf("%-d / %-d = %-d %v", in.n, in.d, in.ans, in.err)
+}
+
+func main() {
+	cancel := make(chan struct{})
+	defer close(cancel)
+
+	ops := opSource(cancel)
+	res := divideStage(ops, cancel)
+	printResultSink(res, cancel)
+
+	time.Sleep(2 * time.Second)
 }

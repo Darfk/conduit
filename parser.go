@@ -12,7 +12,6 @@ import (
 
 var hintRE = regexp.MustCompile(`\/\/ ?conduit`)
 
-
 func packageFromFile(path string) (pkg string, err error) {
 	fs := token.NewFileSet()
 
@@ -53,10 +52,7 @@ func stagesFromFile(path string) (stages []*stage, err error) {
 	for _, decl := range file.Decls {
 		if funcDecl, isFuncDecl := decl.(*ast.FuncDecl); isFuncDecl {
 			if funcDecl.Type == nil ||
-				funcDecl.Doc == nil ||
-				len(funcDecl.Type.Params.List) != 1 ||
-				funcDecl.Type.Results == nil ||
-				len(funcDecl.Type.Results.List) != 1 {
+				funcDecl.Doc == nil {
 				continue
 			}
 
@@ -64,26 +60,32 @@ func stagesFromFile(path string) (stages []*stage, err error) {
 
 			for _, c := range funcDecl.Doc.List {
 				if hintRE.MatchString(c.Text) {
-					p := t.Params.List[0]
-					r := t.Results.List[0]
-					tmpI := &bytes.Buffer{}
-					format.Node(tmpI, fs, p.Type)
-					tmpO := &bytes.Buffer{}
-					format.Node(tmpO, fs, r.Type)
 
-					input := string(tmpI.Bytes())
-					output := string(tmpO.Bytes())
+					stage := &stage{
+						name: funcDecl.Name.Name,
+					}
 
-					stages = append(stages, &stage{
-						name:   funcDecl.Name.Name,
-						input:  &input,
-						output: &output,
-					})
+					if len(funcDecl.Type.Params.List) == 1 {
+						p := t.Params.List[0]
+						tmpI := &bytes.Buffer{}
+						format.Node(tmpI, fs, p.Type)
+						stage.input = string(tmpI.Bytes())
+					}
+
+					if funcDecl.Type.Results != nil &&
+						len(funcDecl.Type.Results.List) == 1 {
+						r := t.Results.List[0]
+						tmpO := &bytes.Buffer{}
+						format.Node(tmpO, fs, r.Type)
+						stage.output = string(tmpO.Bytes())
+					}
+
+					stages = append(stages, stage)
 				}
 			}
 		}
 	}
 
-	return 
+	return
 
 }

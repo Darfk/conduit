@@ -24,7 +24,7 @@ func createFile(w io.Writer, path string, pkg string, imprts []string, stages []
 	}
 
 	for _, stage := range stages {
-		err = template.ExecuteTemplate(buf, "stage", stage)
+		err = stage.execute(buf)
 		if err != nil {
 			return err
 		}

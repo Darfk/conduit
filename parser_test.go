@@ -1,9 +1,7 @@
 package conduit
 
 import (
-	//"bytes"
 	"testing"
-	"fmt"
 )
 
 func TestPackage(t *testing.T) {	
@@ -14,7 +12,7 @@ func TestPackage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("package: ", pkg)
+	t.Log("package: ", pkg)
 }
 
 func TestImports(t *testing.T) {
@@ -26,13 +24,13 @@ func TestImports(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, imprt := range imports {
-		fmt.Println("import: ", imprt)
+		t.Log("import: ", imprt)
 	}
 }
 
 func TestStages(t *testing.T) {
 	const path = "testdata/generateme.go"
-
+	
 	var err error
 	stages, err := stagesFromFile(path)
 	if err != nil {
@@ -40,7 +38,7 @@ func TestStages(t *testing.T) {
 	}
 
 	for _, stage := range stages {
-		fmt.Println("stage: ", stage.name)
+		t.Log("stage: ", stage.name)
 	}
 
 }
