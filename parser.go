@@ -63,6 +63,7 @@ func stagesFromFile(path string) (stages []*stage, err error) {
 
 					stage := &stage{
 						name: funcDecl.Name.Name,
+						pos:  fs.Position(funcDecl.Pos()).String(),
 					}
 
 					if len(funcDecl.Type.Params.List) == 1 {

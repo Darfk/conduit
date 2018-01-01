@@ -8,10 +8,15 @@ type stage struct {
 	name   string
 	input  string
 	output string
+	pos    string
 }
 
 func (q *stage) Name() string {
 	return q.name
+}
+
+func (q *stage) Pos() string {
+	return q.pos
 }
 
 func (q *stage) IsStage() bool {

@@ -16,7 +16,7 @@ import {{.}}
 {{end}}
 
 {{define "stage"}}
-// generated from {{.Name}}(in {{.InputType}}) (out {{.OutputType}})
+// generated from: func {{.Name}}(in {{.InputType}}) (out {{.OutputType}}) in {{.Pos}}
 func {{.Name}}Stage(inc <-chan {{.InputType}}, cancel <-chan struct{}) <-chan {{.OutputType}} {
 	ouc := make(chan {{.OutputType}})
 	go func() {
@@ -35,7 +35,7 @@ func {{.Name}}Stage(inc <-chan {{.InputType}}, cancel <-chan struct{}) <-chan {{
 {{end}}
 
 {{define "source"}}
-// generated from {{.Name}}() (out {{.OutputType}})
+// generated from: func {{.Name}}() (out {{.OutputType}}) in {{.Pos}}
 func {{.Name}}Source(cancel <-chan struct{}) <-chan {{.OutputType}} {
 	ouc := make(chan {{.OutputType}})
 	go func() {
@@ -54,7 +54,7 @@ func {{.Name}}Source(cancel <-chan struct{}) <-chan {{.OutputType}} {
 {{end}}
 
 {{define "sink"}}
-// generated from {{.Name}}(in {{.InputType}}) ()
+// generated from: func {{.Name}}(in {{.InputType}}) () in {{.Pos}}
 func {{.Name}}Sink(inc <- chan {{.InputType}}, cancel <-chan struct{}) {
 	go func() {
 		for {
