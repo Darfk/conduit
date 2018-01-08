@@ -9,6 +9,7 @@ type stage struct {
 	input  string
 	output string
 	pos    string
+	pooled bool
 }
 
 func (q *stage) Name() string {
@@ -49,6 +50,10 @@ func (q *stage) OutputType() string {
 	return q.output
 }
 
+func (q *stage) IsPooled() bool {
+	return q.pooled
+}
+
 func (q *stage) execute(w io.Writer) error {
 	var err error
 
@@ -57,7 +62,11 @@ func (q *stage) execute(w io.Writer) error {
 	} else if q.IsSink() {
 		err = template.ExecuteTemplate(w, "sink", q)
 	} else if q.IsStage() {
-		err = template.ExecuteTemplate(w, "stage", q)
+		if q.IsPooled() {
+			err = template.ExecuteTemplate(w, "stagepool", q)
+		}else{
+			err = template.ExecuteTemplate(w, "stage", q)
+		}
 	}
 
 	return err

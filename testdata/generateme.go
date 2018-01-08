@@ -18,7 +18,7 @@ type divop struct {
 	ans  int
 }
 
-// conduit
+// conduit pool
 func divide(op *divop) *divop {
 	time.Sleep(100 * time.Millisecond)
 	if op.d == 0 {
@@ -27,7 +27,7 @@ func divide(op *divop) *divop {
 		op.ans = op.n / op.d
 	}
 	return op
-}  
+}
 
 // conduit
 func op() *divop {
@@ -44,7 +44,7 @@ func main() {
 	defer close(cancel)
 
 	ops := opSource(cancel)
-	res := divideStage(ops, cancel)
+	res := divideStagePool(ops, cancel, 4)
 	printResultSink(res, cancel)
 
 	time.Sleep(2 * time.Second)

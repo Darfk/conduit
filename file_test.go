@@ -26,7 +26,10 @@ func TestFile(t *testing.T) {
 
 	buf := &bytes.Buffer{}
 
-	createFile(buf, path, pkg, imports, stages)
+	err = createFile(buf, path, pkg, imports, stages)
+	if err!= nil {
+		t.Fatal(err)
+	}
 
 	t.Log(buf.String())
 }

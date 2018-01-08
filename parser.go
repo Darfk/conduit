@@ -10,7 +10,7 @@ import (
 	"regexp"
 )
 
-var hintRE = regexp.MustCompile(`\/\/ ?conduit`)
+var hintRE = regexp.MustCompile(`\/\/ ?conduit( pool)?$`)
 
 func packageFromFile(path string) (pkg string, err error) {
 	fs := token.NewFileSet()
@@ -38,6 +38,8 @@ func importsFromFile(path string) (imports []string, err error) {
 		imports = append(imports, imprt.Path.Value)
 	}
 
+	imports = append(imports, `"sync"`)
+	
 	return
 }
 
@@ -59,11 +61,25 @@ func stagesFromFile(path string) (stages []*stage, err error) {
 			t := funcDecl.Type
 
 			for _, c := range funcDecl.Doc.List {
+
 				if hintRE.MatchString(c.Text) {
 
+					fmt.Println(c.Text)
+
+					var pooled bool
+					{
+						m := hintRE.FindStringSubmatch(c.Text)
+						if len(m) > 1 {
+							if m[1] == " pool" {
+								pooled = true
+							}
+						}
+					}
+
 					stage := &stage{
-						name: funcDecl.Name.Name,
-						pos:  fs.Position(funcDecl.Pos()).String(),
+						name:   funcDecl.Name.Name,
+						pos:    fs.Position(funcDecl.Pos()).String(),
+						pooled: pooled,
 					}
 
 					if len(funcDecl.Type.Params.List) == 1 {
@@ -88,5 +104,4 @@ func stagesFromFile(path string) (stages []*stage, err error) {
 	}
 
 	return
-
 }

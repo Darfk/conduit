@@ -71,4 +71,27 @@ func {{.Name}}Sink(inc <- chan {{.InputType}}, cancel <-chan struct{}) {
 		}
 	}()
 }
+{{end}}
+
+{{define "stagepool"}}
+// generated from: func {{.Name}}(in {{.InputType}}) (out {{.OutputType}}) in {{.Pos}}
+func {{.Name}}StagePool(inc <-chan {{.InputType}}, cancel <-chan struct{}, size int) <-chan {{.OutputType}} {
+	ouc := make(chan {{.OutputType}})
+	pool := sync.WaitGroup{}
+	pool.Add(size)
+	for i := 0; i < size; i++ {
+		go func() {
+			defer pool.Done()
+			for in := range inc {
+				ouv := {{.Name}}(in)
+				select {
+				case <-cancel:
+					return
+				case ouc <- ouv:
+				}
+			}
+		}()
+	}
+	return ouc
+}
 {{end}}`))
