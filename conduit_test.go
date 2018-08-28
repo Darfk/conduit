@@ -1,29 +1,17 @@
 package conduit
 
 import (
-	"log"
 	"testing"
 )
 
 const (
-	Factorial = iota
-	Print
+	BadPort   = 9999
 )
 
 type BadPortJob struct{}
 
-func (job *BadPortJob) Port() int { return 9999 }
+func (job *BadPortJob) Port() int { return BadPort }
 func (job *BadPortJob) Do() []Job { return nil }
-
-type PrintJob struct {
-	a int
-}
-
-func (job *PrintJob) Port() int { return Print }
-func (job *PrintJob) Do() []Job {
-	log.Println(job.a)
-	return nil
-}
 
 func TestUnroutable(t *testing.T) {
 	func() {
