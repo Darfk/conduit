@@ -13,6 +13,7 @@ const (
 type stage struct {
 	inc         chan Job
 	cancel      chan struct{}
+	lock        sync.Mutex
 	poolSize    int
 	inputBuffer int
 }
@@ -79,6 +80,7 @@ func (net *Network) AddStage(port int, options ...option) {
 		}
 	}
 
+	stage.lock.Lock()
 	stage.inc = make(chan Job, stage.inputBuffer)
 
 	net.stages[port] = stage
@@ -89,7 +91,21 @@ func (net *Network) route(jobs []Job) {
 	for _, job := range jobs {
 		port := job.Port()
 		if stage, exists := net.stages[port]; exists {
+			stage.lock.Lock()
+			if len(stage.inc) >= cap(stage.inc) {
+				old := stage.inc
+				stage.inc = make(chan Job, cap(old)*2)
+				close(old)
+				for {
+					if drain, open := <-old; open {
+						stage.inc <- drain
+						continue
+					}
+					break
+				}
+			}
 			stage.inc <- job
+			stage.lock.Unlock()
 			continue
 		}
 		panic(fmt.Errorf("could not route job %q: no stage exists at port %d", job, port))
@@ -110,7 +126,9 @@ func (net *Network) Start() {
 				defer pool.Done()
 				for {
 
+					stage.lock.Unlock()
 					in, open := <-stage.inc
+					stage.lock.Unlock()
 
 					if !open {
 						return
