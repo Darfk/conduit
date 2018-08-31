@@ -108,7 +108,13 @@ func (net *Network) Start() {
 		for i := 0; i < stage.poolSize; i++ {
 			go func() {
 				defer pool.Done()
-				for in := range stage.inc {
+				for {
+
+					in, open := <-stage.inc
+
+					if !open {
+						return
+					}
 					jobs := in.Do()
 					net.route(jobs)
 					net.wg.Done()
