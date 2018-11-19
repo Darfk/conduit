@@ -25,6 +25,7 @@ type Job interface {
 type Network struct {
 	stages map[int]*stage
 	wg     sync.WaitGroup
+	sw     sync.WaitGroup
 }
 
 func NewNetwork(options ...option) (net *Network) {
@@ -51,7 +52,6 @@ func Option(key int, val interface{}) option {
 func (net *Network) AddStage(port int, options ...option) {
 	if _, exists := net.stages[port]; exists {
 		panic(fmt.Errorf("cannot create a stage on port %d, a stage already exists", port))
-		return
 	}
 
 	stage := &stage{}
@@ -65,7 +65,6 @@ func (net *Network) AddStage(port int, options ...option) {
 				stage.inputBuffer = val
 			} else {
 				panic(fmt.Errorf("InputBuffer option expects a positive integer or zero, got (%T)%q", options[i].val, options[i].val))
-				return
 			}
 		}
 
@@ -74,7 +73,6 @@ func (net *Network) AddStage(port int, options ...option) {
 				stage.poolSize = val
 			} else {
 				panic(fmt.Errorf("PoolSize option expects a positive integer, got (%T)%q", options[i].val, options[i].val))
-				return
 			}
 		}
 	}
@@ -103,21 +101,25 @@ func (net *Network) AddJobs(jobs ...Job) {
 func (net *Network) Start() {
 	for i, _ := range net.stages {
 		stage := net.stages[i]
-		pool := sync.WaitGroup{}
-		pool.Add(stage.poolSize)
 		for i := 0; i < stage.poolSize; i++ {
+			net.sw.Add(1)
 			go func() {
-				defer pool.Done()
 				for in := range stage.inc {
 					jobs := in.Do()
 					net.route(jobs)
 					net.wg.Done()
 				}
+				net.sw.Done()
 			}()
 		}
 	}
 }
 
 func (net *Network) Wait() {
+	// wait for all jobs to be out of the network
 	net.wg.Wait()
+	for _, stage := range net.stages {
+		close(stage.inc)
+	}
+	net.sw.Wait()
 }

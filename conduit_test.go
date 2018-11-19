@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	BadPort   = 9999
+	BadPort = 9999
 )
 
 type BadPortJob struct{}
@@ -72,4 +72,38 @@ func TestPanics(t *testing.T) {
 		}()
 		net.AddStage(2, Option(PoolSize, 0))
 	}()
+}
+
+// the point of this job is to duplicate itself and
+// die after 4 iterations
+type CoolJob struct {
+	n int
+}
+
+func (job *CoolJob) Port() int { return 0 }
+func (job *CoolJob) Do() []Job {
+	job.n++
+	if job.n > 4 {
+		return nil
+	}
+	return []Job{
+		&CoolJob{job.n},
+		&CoolJob{job.n},
+	}
+}
+
+func TestOperation(t *testing.T) {
+	net := NewNetwork()
+	net.AddStage(0, Option(InputBuffer, 100))
+	net.AddJobs(&CoolJob{})
+	net.Start()
+	net.Wait()
+}
+
+func TestOperationNetworkStartFlipped(t *testing.T) {
+	net := NewNetwork()
+	net.AddStage(0, Option(InputBuffer, 100))
+	net.Start()
+	net.AddJobs(&CoolJob{})
+	net.Wait()
 }
