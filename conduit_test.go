@@ -72,6 +72,19 @@ func TestPanics(t *testing.T) {
 		}()
 		net.AddStage(2, Option(PoolSize, 0))
 	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("using an invalid stage option did not cause a panic")
+			}
+		}()
+
+		invalidKey := 0
+
+		net.AddStage(0, Option(invalidKey, 0))
+	}()
+
 }
 
 // the point of this job is to duplicate itself and

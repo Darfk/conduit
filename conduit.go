@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	InputBuffer = iota
+	InputBuffer = iota + 1
 	PoolSize
 )
 
@@ -64,16 +64,19 @@ func (net *Network) AddStage(port int, options ...option) {
 			if val, ok := options[i].val.(int); ok && val >= 0 {
 				stage.inputBuffer = val
 			} else {
-				panic(fmt.Errorf("InputBuffer option expects a positive integer or zero, got (%T)%q", options[i].val, options[i].val))
+				panic(fmt.Errorf("InputBuffer option expects a positive integer or zero, got (%T)%q",
+					options[i].val, options[i].val))
 			}
-		}
-
-		if options[i].key == PoolSize {
+		} else if options[i].key == PoolSize {
 			if val, ok := options[i].val.(int); ok && val >= 1 {
 				stage.poolSize = val
 			} else {
-				panic(fmt.Errorf("PoolSize option expects a positive integer, got (%T)%q", options[i].val, options[i].val))
+				panic(fmt.Errorf("PoolSize option expects a positive integer, got (%T)%q",
+					options[i].val, options[i].val))
 			}
+		} else {
+			panic(fmt.Errorf("option %T(%v) is not a suitable option for a stage",
+				options[i].key, options[i].val))
 		}
 	}
 
