@@ -75,8 +75,8 @@ func (net *Network) AddStage(port int, options ...option) {
 					options[i].val, options[i].val))
 			}
 		} else {
-			panic(fmt.Errorf("option %T(%v) is not a suitable option for a stage",
-				options[i].key, options[i].val))
+			panic(fmt.Errorf("option (%T)%q:(%T)%q is not a suitable option for a stage",
+				options[i].key, options[i].key, options[i].val, options[i].val))
 		}
 	}
 
