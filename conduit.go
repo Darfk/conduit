@@ -103,11 +103,72 @@ func (net *Network) AddJobs(jobs ...Job) {
 
 func (net *Network) Start() {
 	for i, _ := range net.stages {
+
 		stage := net.stages[i]
+
+		var (
+			// size to increase when the input pointer runs off the edge
+			// TODO: make these configurable
+			siz int = 10
+			// distance the output pointer gets away from the start before resize
+			drg int = 10
+
+			// is the channel open?
+			opn bool = true
+			// output channel
+			ouc = make(chan Job, 1)
+			// output pointer
+			opt int
+			// input pointer
+			ipt int
+			// buffer
+			buf []Job
+		)
+
+		go func() {
+			for {
+				if opt == drg {
+					buf = buf[drg:]
+					opt -= drg
+					ipt -= drg
+				}
+				if opn {
+					if ipt == len(buf) {
+						nbf := make([]Job, len(buf)+siz)
+						copy(nbf, buf)
+						buf = nbf
+					}
+					if ipt == opt {
+						select {
+						case buf[ipt], opn = <-stage.inc:
+							ipt++
+						}
+					} else if ipt > opt {
+						select {
+						case ouc <- buf[opt]:
+							opt++
+						case buf[ipt], opn = <-stage.inc:
+							ipt++
+						}
+					}
+				} else {
+					if opt == ipt-1 {
+						break
+					}
+					select {
+					case ouc <- buf[opt]:
+						opt++
+					}
+				}
+			}
+			close(ouc)
+		}()
+
 		for i := 0; i < stage.poolSize; i++ {
 			net.sw.Add(1)
 			go func() {
-				for in := range stage.inc {
+				for in := range ouc {
+					// println(in)
 					jobs := in.Do()
 					net.route(jobs)
 					net.wg.Done()
@@ -115,6 +176,7 @@ func (net *Network) Start() {
 				net.sw.Done()
 			}()
 		}
+
 	}
 }
 
@@ -122,6 +184,7 @@ func (net *Network) Wait() {
 	// wait for all jobs to be out of the network
 	net.wg.Wait()
 	for _, stage := range net.stages {
+		// println("close stage inc")
 		close(stage.inc)
 	}
 	net.sw.Wait()

@@ -120,3 +120,16 @@ func TestOperationNetworkStartFlipped(t *testing.T) {
 	net.AddJobs(&CoolJob{})
 	net.Wait()
 }
+
+func TestInfiniteChan(t *testing.T) {
+	net := NewNetwork()
+	net.AddStage(0, Option(InputBuffer, 1))
+	net.Start()
+	net.AddJobs(&CoolJob{})
+	net.AddJobs(&CoolJob{})
+	net.AddJobs(&CoolJob{})
+	net.AddJobs(&CoolJob{})
+	net.AddJobs(&CoolJob{})
+	net.AddJobs(&CoolJob{})
+	net.Wait()
+}
