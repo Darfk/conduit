@@ -6,15 +6,13 @@ import (
 )
 
 const (
-	InputBuffer = iota + 1
-	PoolSize
+	PoolSize = iota + 1
 )
 
 type stage struct {
-	inc         chan Job
-	cancel      chan struct{}
-	poolSize    int
-	inputBuffer int
+	inc      chan Job
+	cancel   chan struct{}
+	poolSize int
 }
 
 type Job interface {
@@ -56,18 +54,10 @@ func (net *Network) AddStage(port int, options ...option) {
 
 	stage := &stage{}
 
-	stage.inputBuffer = 0
 	stage.poolSize = 1
 
 	for i, _ := range options {
-		if options[i].key == InputBuffer {
-			if val, ok := options[i].val.(int); ok && val >= 0 {
-				stage.inputBuffer = val
-			} else {
-				panic(fmt.Errorf("InputBuffer option expects a positive integer or zero, got (%T)%q",
-					options[i].val, options[i].val))
-			}
-		} else if options[i].key == PoolSize {
+		if options[i].key == PoolSize {
 			if val, ok := options[i].val.(int); ok && val >= 1 {
 				stage.poolSize = val
 			} else {
@@ -80,7 +70,7 @@ func (net *Network) AddStage(port int, options ...option) {
 		}
 	}
 
-	stage.inc = make(chan Job, stage.inputBuffer)
+	stage.inc = make(chan Job, 1)
 
 	net.stages[port] = stage
 }

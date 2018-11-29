@@ -56,17 +56,6 @@ func TestPanics(t *testing.T) {
 	func() {
 		defer func() {
 			if r := recover(); r == nil {
-				t.Log(r)
-				t.Errorf("setting the InputBuffer option to a negative number did not cause a panic")
-			}
-		}()
-
-		net.AddStage(1, Option(InputBuffer, -1))
-	}()
-
-	func() {
-		defer func() {
-			if r := recover(); r == nil {
 				t.Errorf("setting the PoolSize option to a negative number did not cause a panic")
 			}
 		}()
@@ -107,7 +96,7 @@ func (job *CoolJob) Do() []Job {
 
 func TestOperation(t *testing.T) {
 	net := NewNetwork()
-	net.AddStage(0, Option(InputBuffer, 100))
+	net.AddStage(0)
 	net.AddJobs(&CoolJob{})
 	net.Start()
 	net.Wait()
@@ -115,7 +104,7 @@ func TestOperation(t *testing.T) {
 
 func TestOperationNetworkStartFlipped(t *testing.T) {
 	net := NewNetwork()
-	net.AddStage(0, Option(InputBuffer, 100))
+	net.AddStage(0)
 	net.Start()
 	net.AddJobs(&CoolJob{})
 	net.Wait()
@@ -123,7 +112,7 @@ func TestOperationNetworkStartFlipped(t *testing.T) {
 
 func TestInfiniteChan(t *testing.T) {
 	net := NewNetwork()
-	net.AddStage(0, Option(InputBuffer, 1))
+	net.AddStage(0)
 	net.Start()
 	net.AddJobs(&CoolJob{})
 	net.AddJobs(&CoolJob{})
