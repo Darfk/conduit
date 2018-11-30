@@ -91,37 +91,46 @@ func TestPanics(t *testing.T) {
 
 }
 
-// the point of this job is to duplicate itself and
+// the point of this job is to print it's n
+// create 2 more of itself and
 // die after 4 iterations
-type CoolJob struct {
+type TestJob struct {
 	n int
+	t *testing.T
 }
 
-func (job *CoolJob) Port() int { return 0 }
-func (job *CoolJob) Do() []Job {
-	job.n++
-	if job.n > 4 {
+func (job *TestJob) Port() int { return 0 }
+func (job *TestJob) Do() []Job {
+
+	job.t.Logf("TestJob(%p).n = %d", job, job.n)
+
+	if job.n == 3 {
 		return nil
 	}
+
+	job.n++
+
 	return []Job{
-		&CoolJob{job.n},
-		&CoolJob{job.n},
+		&TestJob{n: job.n, t: job.t},
+		&TestJob{n: job.n, t: job.t},
 	}
 }
 
 func TestOperation(t *testing.T) {
 	net := NewNetwork()
 	net.AddStage(0)
-	net.AddJobs(&CoolJob{})
+	net.AddJobs(&TestJob{t: t})
 	net.Start()
 	net.Wait()
 }
 
+// this test demonstrates that the order of starting and adding
+// jobs is not important
 func TestOperationNetworkStartFlipped(t *testing.T) {
 	net := NewNetwork()
 	net.AddStage(0)
 	net.Start()
-	net.AddJobs(&CoolJob{})
+	net.AddJobs(&TestJob{t: t})
 	net.Wait()
 }
 
@@ -129,11 +138,8 @@ func TestInfiniteChan(t *testing.T) {
 	net := NewNetwork()
 	net.AddStage(0)
 	net.Start()
-	net.AddJobs(&CoolJob{})
-	net.AddJobs(&CoolJob{})
-	net.AddJobs(&CoolJob{})
-	net.AddJobs(&CoolJob{})
-	net.AddJobs(&CoolJob{})
-	net.AddJobs(&CoolJob{})
+	for i := 0; i < 10; i++ {
+		net.AddJobs(&TestJob{t: t})
+	}
 	net.Wait()
 }
