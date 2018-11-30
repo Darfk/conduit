@@ -53,14 +53,29 @@ func TestPanics(t *testing.T) {
 
 	}()
 
-	func() {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("setting the PoolSize option to a negative number did not cause a panic")
-			}
-		}()
-		net.AddStage(2, Option(PoolSize, 0))
-	}()
+	{
+		tests := []struct {
+			opt option
+			msg string
+		}{
+			{Option(PoolSize, 0),
+				"setting the PoolSize option to a number < 1 did not cause a panic"},
+			{Option(GrowBy, 0),
+				"setting the GrowBy option to a number < 1 did not cause a panic"},
+			{Option(ShrinkBy, 0),
+				"setting the ShrinkBy option to a number < 1 did not cause a panic"},
+		}
+		for _, test := range tests {
+			func() {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf(test.msg)
+					}
+				}()
+				net.AddStage(2, test.opt)
+			}()
+		}
+	}
 
 	func() {
 		defer func() {

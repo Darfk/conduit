@@ -7,12 +7,16 @@ import (
 
 const (
 	PoolSize = iota + 1
+	GrowBy
+	ShrinkBy
 )
 
 type stage struct {
 	inc      chan Job
 	cancel   chan struct{}
 	poolSize int
+	growBy   int
+	shrinkBy int
 }
 
 type Job interface {
@@ -55,6 +59,8 @@ func (net *Network) AddStage(port int, options ...option) {
 	stage := &stage{}
 
 	stage.poolSize = 1
+	stage.growBy = 16
+	stage.shrinkBy = 16
 
 	for i, _ := range options {
 		if options[i].key == PoolSize {
@@ -62,6 +68,20 @@ func (net *Network) AddStage(port int, options ...option) {
 				stage.poolSize = val
 			} else {
 				panic(fmt.Errorf("PoolSize option expects a positive integer, got (%T)%q",
+					options[i].val, options[i].val))
+			}
+		} else if options[i].key == GrowBy {
+			if val, ok := options[i].val.(int); ok && val >= 1 {
+				stage.growBy = val
+			} else {
+				panic(fmt.Errorf("GrowBy option expects a positive integer, got (%T)%q",
+					options[i].val, options[i].val))
+			}
+		} else if options[i].key == ShrinkBy {
+			if val, ok := options[i].val.(int); ok && val >= 1 {
+				stage.shrinkBy = val
+			} else {
+				panic(fmt.Errorf("ShrinkBy option expects a positive integer, got (%T)%q",
 					options[i].val, options[i].val))
 			}
 		} else {
@@ -98,10 +118,9 @@ func (net *Network) Start() {
 
 		var (
 			// size to increase when the input pointer runs off the edge
-			// TODO: make these configurable
-			siz int = 10
+			grw int = stage.growBy
 			// distance the output pointer gets away from the start before resize
-			drg int = 10
+			shk int = stage.shrinkBy
 
 			// is the channel open?
 			opn bool = true
@@ -117,14 +136,14 @@ func (net *Network) Start() {
 
 		go func() {
 			for {
-				if opt == drg {
-					buf = buf[drg:]
-					opt -= drg
-					ipt -= drg
+				if opt == shk {
+					buf = buf[shk:]
+					opt -= shk
+					ipt -= shk
 				}
 				if opn {
 					if ipt == len(buf) {
-						nbf := make([]Job, len(buf)+siz)
+						nbf := make([]Job, len(buf)+grw)
 						copy(nbf, buf)
 						buf = nbf
 					}
