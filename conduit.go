@@ -177,7 +177,6 @@ func (net *Network) Start() {
 			net.sw.Add(1)
 			go func() {
 				for in := range ouc {
-					// println(in)
 					jobs := in.Do()
 					net.route(jobs)
 					net.wg.Done()
@@ -193,7 +192,6 @@ func (net *Network) Wait() {
 	// wait for all jobs to be out of the network
 	net.wg.Wait()
 	for _, stage := range net.stages {
-		// println("close stage inc")
 		close(stage.inc)
 	}
 	net.sw.Wait()
