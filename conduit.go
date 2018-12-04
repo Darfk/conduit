@@ -173,18 +173,37 @@ func (net *Network) Start() {
 			close(ouc)
 		}()
 
-		for i := 0; i < stage.poolSize; i++ {
-			net.sw.Add(1)
-			go func() {
-				for in := range ouc {
-					jobs := in.Do()
-					net.route(jobs)
-					net.wg.Done()
-				}
-				net.sw.Done()
-			}()
-		}
+		go func() {
 
+			var (
+				psz int = stage.poolSize
+				inu int
+				rtn chan []Job = make(chan []Job)
+			)
+
+			for {
+				if inu < psz {
+					select {
+					case jbs := <-rtn:
+						net.route(jbs)
+						net.wg.Done()
+						inu--
+					case job := <-ouc:
+						go func() {
+							rtn <- job.Do()
+						}()
+						inu++
+					}
+				} else {
+					select {
+					case jbs := <-rtn:
+						net.route(jbs)
+						net.wg.Done()
+						inu--
+					}
+				}
+			}
+		}()
 	}
 }
 
@@ -194,5 +213,4 @@ func (net *Network) Wait() {
 	for _, stage := range net.stages {
 		close(stage.inc)
 	}
-	net.sw.Wait()
 }

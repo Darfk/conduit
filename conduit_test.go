@@ -143,3 +143,9 @@ func TestInfiniteChan(t *testing.T) {
 	}
 	net.Wait()
 }
+
+func TestDoNothing(t *testing.T) {
+	net := NewNetwork()
+	net.Start()
+	net.Wait()
+}
