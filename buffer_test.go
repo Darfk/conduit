@@ -12,7 +12,7 @@ func (j *TestBufferJob) Route() int { return 0 }
 
 func TestBuffer(t *testing.T) {
 
-	b := NewBuffer()
+	b := NewBuffer(16, 16)
 	b.output = make(chan Job)
 
 	go b.main()

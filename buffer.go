@@ -41,11 +41,11 @@ func vis(buf []Job, ipt, opt int, opn bool) string {
 	return s + "\n" + t
 }
 
-func NewBuffer() (b *Buffer) {
+func NewBuffer(grow, shrink int) (b *Buffer) {
 	b = &Buffer{
 		input:  make(chan Job),
-		grow:   16,
-		shrink: 16,
+		grow:   grow,
+		shrink: shrink,
 		cancel: make(chan struct{}),
 		done:   make(chan struct{}),
 	}
@@ -62,7 +62,6 @@ func (b *Buffer) main() {
 	)
 
 	for open {
-
 		select {
 		case <-b.cancel:
 			open = false
