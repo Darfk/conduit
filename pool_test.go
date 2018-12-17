@@ -2,7 +2,6 @@ package conduit
 
 import (
 	"testing"
-	"time"
 )
 
 type TestPoolJob struct {
@@ -10,7 +9,6 @@ type TestPoolJob struct {
 }
 
 func (j *TestPoolJob) Do() []Job {
-	time.Sleep(time.Second)
 	return []Job{j}
 }
 func (j *TestPoolJob) Route() int { return 0 }

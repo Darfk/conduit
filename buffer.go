@@ -9,38 +9,6 @@ type Buffer struct {
 	done   chan struct{}
 }
 
-func vis(buf []Job, ipt, opt int, opn bool) string {
-	s := ""
-	if opn {
-		s = "O"
-	} else {
-		s = "X"
-	}
-
-	t := "["
-
-	for i := 0; i < len(buf); i++ {
-		if ipt > i && opt <= i {
-			t += "-"
-		} else {
-			t += "_"
-		}
-
-		if ipt == i && opt == i {
-			s += "*"
-		} else if ipt == i {
-			s += "i"
-		} else if opt == i {
-			s += "o"
-		} else {
-			s += " "
-		}
-	}
-	t += "]"
-
-	return s + "\n" + t
-}
-
 func NewBuffer(grow, shrink int) (b *Buffer) {
 	b = &Buffer{
 		input:  make(chan Job),
@@ -54,37 +22,45 @@ func NewBuffer(grow, shrink int) (b *Buffer) {
 
 func (b *Buffer) main() {
 	var (
-		open   bool     = true
-		ipt    int      = 0
-		opt    int      = 0
-		buf    []Job    = make([]Job, b.grow)
-		output chan Job = nil
+		open bool  = true
+		ipt  int   = 0
+		opt  int   = 0
+		buf  []Job = make([]Job, b.grow)
 	)
 
 	for open {
-		select {
-		case <-b.cancel:
-			open = false
-		case job := <-b.input:
-			if ipt == len(buf) {
-				nbf := make([]Job, len(buf)+b.grow)
-				copy(nbf, buf)
-				buf = nbf
+		if opt == ipt {
+			select {
+			case <-b.cancel:
+				open = false
+			case job := <-b.input:
+				buf[ipt] = job
+				ipt++
 			}
-			buf[ipt] = job
-			ipt++
-			output = b.output
-		case output <- buf[opt]:
-			opt++
-			if opt == b.shrink {
-				buf = buf[b.shrink:]
-				opt -= b.shrink
-				ipt -= b.shrink
-			}
-			if opt == ipt {
-				output = nil
+		} else {
+			select {
+			case <-b.cancel:
+				open = false
+			case job := <-b.input:
+				buf[ipt] = job
+				ipt++
+			case b.output <- buf[opt]:
+				opt++
 			}
 		}
+
+		if ipt == len(buf) {
+			nbf := make([]Job, len(buf)+b.grow)
+			copy(nbf, buf)
+			buf = nbf
+		}
+
+		if opt == b.shrink {
+			buf = buf[b.shrink:]
+			opt -= b.shrink
+			ipt -= b.shrink
+		}
+
 	}
 	close(b.done)
 }

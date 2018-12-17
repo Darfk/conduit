@@ -26,7 +26,6 @@ func (p *Pool) main() {
 	var cancel chan struct{} = make(chan struct{})
 
 	for i := 0; i < p.size; i++ {
-		i := i
 		go func() {
 			var (
 				open bool = true
@@ -39,7 +38,6 @@ func (p *Pool) main() {
 					case <-cancel:
 						open = false
 					case job := <-p.input:
-						println("pool", i, "working on", job)
 						jobs = job.Do()
 						opt = 0
 					}

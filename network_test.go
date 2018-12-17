@@ -9,11 +9,10 @@ type TestNetworkJob struct {
 }
 
 func (j *TestNetworkJob) Do() []Job {
-	if j.n > 0 {
-		j.n--
-		return []Job{&TestNetworkJob{j.n}}
+	if j.n < 2 {
+		return nil
 	}
-	return nil
+	return []Job{&TestNetworkJob{j.n - 1}}
 }
 
 func (j *TestNetworkJob) Route() int {
