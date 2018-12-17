@@ -7,6 +7,7 @@ type Buffer struct {
 	shrink int
 	cancel chan struct{}
 	done   chan struct{}
+	buf    []Job
 }
 
 func NewBuffer(grow, shrink int) (b *Buffer) {
@@ -16,16 +17,16 @@ func NewBuffer(grow, shrink int) (b *Buffer) {
 		shrink: shrink,
 		cancel: make(chan struct{}),
 		done:   make(chan struct{}),
+		buf:    make([]Job, grow),
 	}
 	return
 }
 
 func (b *Buffer) main() {
 	var (
-		open bool  = true
-		ipt  int   = 0
-		opt  int   = 0
-		buf  []Job = make([]Job, b.grow)
+		open bool = true
+		ipt  int  = 0
+		opt  int  = 0
 	)
 
 	for open {
@@ -34,7 +35,7 @@ func (b *Buffer) main() {
 			case <-b.cancel:
 				open = false
 			case job := <-b.input:
-				buf[ipt] = job
+				b.buf[ipt] = job
 				ipt++
 			}
 		} else {
@@ -42,21 +43,21 @@ func (b *Buffer) main() {
 			case <-b.cancel:
 				open = false
 			case job := <-b.input:
-				buf[ipt] = job
+				b.buf[ipt] = job
 				ipt++
-			case b.output <- buf[opt]:
+			case b.output <- b.buf[opt]:
 				opt++
 			}
 		}
 
-		if ipt == len(buf) {
-			nbf := make([]Job, len(buf)+b.grow)
-			copy(nbf, buf)
-			buf = nbf
+		if ipt == len(b.buf) {
+			nbf := make([]Job, len(b.buf)+b.grow)
+			copy(nbf, b.buf)
+			b.buf = nbf
 		}
 
 		if opt == b.shrink {
-			buf = buf[b.shrink:]
+			b.buf = b.buf[b.shrink:]
 			opt -= b.shrink
 			ipt -= b.shrink
 		}

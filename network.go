@@ -1,6 +1,8 @@
 package conduit
 
-import ()
+import (
+	"fmt"
+)
 
 type stage struct {
 	route  int
@@ -10,7 +12,6 @@ type stage struct {
 
 type Network struct {
 	input  chan Job
-	output chan Job
 	cancel chan struct{}
 	done   chan struct{}
 	stages map[int]*stage
@@ -22,10 +23,10 @@ func NewNetwork(cfg Config) (net *Network, err error) {
 	}
 
 	net = &Network{
-		input:  make(chan Job),
-		done:   make(chan struct{}),
-		cancel: make(chan struct{}),
-		stages: make(map[int]*stage),
+		input:    make(chan Job),
+		done:     make(chan struct{}),
+		cancel:   make(chan struct{}),
+		stages:   make(map[int]*stage),
 	}
 
 	for _, stageConfig := range cfg.Stages {
@@ -43,6 +44,21 @@ func NewNetwork(cfg Config) (net *Network, err error) {
 	}
 
 	return
+}
+
+func (net *Network) Start() {
+	go net.main()
+}
+
+func (net *Network) Stop() {
+	close(net.cancel)
+	<-net.done
+}
+
+func (net *Network) Push(jobs []Job) {
+	for _, job := range jobs {
+		net.input <- job
+	}
 }
 
 func (net *Network) main() {
@@ -66,6 +82,9 @@ func (net *Network) main() {
 			}
 		} else {
 			route := job.Route()
+			if _, exists := net.stages[route]; !exists {
+				panic(fmt.Errorf("no stage exists at route %d", route))
+			}
 			select {
 			case <-net.cancel:
 				open = false
